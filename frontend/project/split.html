@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SplitExpense — PocketHeist</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" id="navbar">
+  <div class="container">
+    <img src="logo2.png" alt="pocketheist" width="40" height="40" class="me-2">
+    <a class="navbar-brand fw-bold" href="dashboard.html"><h1>PocketHeist</h1></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="targets.html">Targets</a></li>
+        <li class="nav-item"><a class="nav-link active" href="split.html">SplitExpense</a></li>
+        <li class="nav-item"><a class="nav-link" href="categories.html">Categories</a></li>
+        <li class="nav-item"><a class="nav-link" href="reminders.html">Reminders</a></li>
+        <li class="nav-item ms-3"><button id="themeToggle"></button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="container my-4 page-anim">
+
+  <div class="card p-4 shadow-lg card-hover fade-in mb-4">
+    <h4 class="fw-bold mb-2"><i class="bi bi-people-fill text-primary"></i> Split a Bill</h4>
+    <p class="small text-muted">Add number of friends or their names to split a shared expense.</p>
+
+    <!-- Split form -->
+    <form id="splitForm" class="row g-3 mt-2">
+  <div class="col-md-3">
+    <input class="form-control" name="payer" placeholder="Payer e.g. You" />
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" name="total" type="number" placeholder="Total Amount (₹)" />
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" name="friends" placeholder="Friends (number or names e.g. 3 or Riya,Aman)" />
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" name="description" placeholder="Description e.g. Dinner" />
+  </div>
+  <div class="col-12 d-flex align-items-end">
+    <button class="btn btn-primary fw-semibold">💸 Split</button>
+  </div>
+</form>
+<div id="splitResult" class="mt-4 fade-in"></div>
+
+
+    <div id="splitResult" class="mt-4 fade-in"></div>
+  </div>
+
+  <div class="card p-4 shadow-lg card-hover fade-in mb-4">
+    <h6 class="fw-semibold mb-3"><i class="bi bi-cash-coin text-success"></i> Settlements</h6>
+    <ul id="settleList" class="list-group list-group-flush"></ul>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav shadow-lg">
+  <a data-page="dashboard" href="dashboard.html"><i class="bi bi-house"></i><span>Home</span></a>
+  <a data-page="targets" href="targets.html"><i class="bi bi-bullseye"></i><span>Targets</span></a>
+  <a data-page="splitwise" href="split.html" class="active"><i class="bi bi-people"></i><span>SplitExpense</span></a>
+  <a data-page="categories" href="categories.html"><i class="bi bi-list"></i><span>Categories</span></a>
+  <a data-page="reminders" href="reminders.html"><i class="bi bi-bell"></i><span>Reminders</span></a>
+</div>
+
+<!-- Animated background -->
+<canvas id="galaxy-bg"></canvas>
+<div id="light-icons-bg"></div>
+<script src="js/background.js"></script>
+
+<!-- JS -->
+<script type="module" src="js/app.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  APP.initThemeToggle('themeToggle');
+  APP.setActive('splitwise');
+
+  const API_SPLITS = "http://localhost:5000/api/splits";
+  const userId = "652c4f9a3f2e8c2a7f1e9b30"; // replace by real logged-in user id later
+
+  const form = document.getElementById('splitForm');
+  const result = document.getElementById('splitResult');
+  const list = document.getElementById('settleList');
+
+  // helper to render history
+  async function loadHistory() {
+    try {
+      const res = await fetch(`${API_SPLITS}?userId=${encodeURIComponent(userId)}`);
+      const body = await res.json();
+      const splits = body.splits || [];
+      renderHistory(splits);
+    } catch (err) {
+      console.error("Load splits error:", err);
+    }
+  }
+
+  function renderHistory(splits) {
+    if (!splits || splits.length === 0) {
+      list.innerHTML = '<li class="list-group-item small text-muted">No splits yet</li>';
+      return;
+    }
+
+    list.innerHTML = splits.map(s => {
+      const total = Number(s.total).toFixed(2);
+      const peopleCount = (s.people?.length || 0) + 1;
+      const per = Number(s.perPerson).toFixed(2);
+      const desc = s.description ? ` — ${escapeHtml(s.description)}` : '';
+      const when = new Date(s.date || s.createdAt).toLocaleString();
+      return `
+        <li class="list-group-item d-flex justify-content-between align-items-start small">
+          <div>
+            <div><strong>Split:</strong> ₹${total} split between ${peopleCount}${desc}</div>
+            <div class="text-muted small">Each: ₹${per} · ${when}</div>
+          </div>
+          <div class="d-flex flex-column align-items-end">
+            <button data-id="${s._id}" class="btn btn-sm btn-outline-danger mb-2 btn-delete">Delete</button>
+            <button data-id="${s._id}" class="btn btn-sm btn-outline-secondary btn-copy">Copy</button>
+          </div>
+        </li>`;
+    }).join('');
+
+    // wire delete and copy
+    document.querySelectorAll('.btn-delete').forEach(b=>{
+      b.addEventListener('click', async ev=>{
+        const id = b.dataset.id;
+        if (!confirm("Delete this split entry?")) return;
+        try {
+          await fetch(`${API_SPLITS}/${id}`, { method: 'DELETE' });
+          loadHistory();
+        } catch (err) { console.error(err); alert("Delete failed"); }
+      });
+    });
+
+    document.querySelectorAll('.btn-copy').forEach(b=>{
+      b.addEventListener('click', ev=>{
+        const id = b.dataset.id;
+        const item = splits.find(x => x._id === id);
+        if(!item) return;
+        const peopleCount = (item.people?.length || 0) + 1;
+        const text = `₹${Number(item.total).toFixed(2)} split between ${peopleCount}${item.description ? " — " + item.description : ""}. Each pays ₹${Number(item.perPerson).toFixed(2)}.`;
+        navigator.clipboard?.writeText(text).then(()=>alert("Copied to clipboard"));
+      });
+    });
+  }
+
+  // sanitize text for display
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
+  }
+
+  // split algorithm: accept either number of friends OR comma separated names (prefer names if provided)
+  function parseFriendsInput(input) {
+    if (!input) return [];
+    input = String(input).trim();
+    // if purely numeric -> treat as number
+    if (/^\d+$/.test(input)) {
+      const n = Number(input);
+      // number is "friends" excluding payer; we'll return array length n
+      const arr = [];
+      for (let i=1;i<=n;i++) arr.push({ name: `Person ${i}` });
+      return arr;
+    }
+    // else treat as comma-separated names
+    const arr = input.split(',').map(s => s.trim()).filter(Boolean);
+    if (arr.length === 0) return [];
+    return arr.map(n => ({ name: n }));
+  }
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    const payer = fd.get('payer') || 'You';
+    const total = Number(fd.get('total') || 0);
+    const friendsRaw = String(fd.get('friends') || '');
+    const description = fd.get('description') || '';
+    if (!total || total <= 0) {
+      result.innerHTML = `<div class="alert alert-danger fade-in">⚠️ Please enter a valid total amount.</div>`;
+      return;
+    }
+
+    // parse friends input:
+    // If user provided numeric N => friends array of length N
+    // If user provided names => array of names
+    // people in DB is the other people (excluding payer)
+    let peopleArr = parseFriendsInput(friendsRaw);
+
+    // if user entered "0" or empty -> treat as payer only
+    const participantsCount = peopleArr.length + 1;
+    const per = +(total / participantsCount).toFixed(2);
+
+    // prepare payload
+    const payload = {
+      userId,
+      payer,
+      total,
+      people: peopleArr.map(p=>p.name),
+      description,
+      date: new Date().toISOString()
+    };
+
+    try {
+      const res = await fetch(API_SPLITS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        result.innerHTML = `<div class="alert alert-danger fade-in">❌ ${body.error||"Failed to save"}</div>`;
+        return;
+      }
+
+      result.innerHTML = `<div class="alert alert-success fade-in">✅ Split saved — ₹${total} split among ${participantsCount}. Each pays ₹${per.toFixed(2)}.</div>`;
+      form.reset();
+      loadHistory();
+    } catch (err) {
+      console.error(err);
+      result.innerHTML = `<div class="alert alert-danger fade-in">Server error</div>`;
+    }
+  });
+
+  // initial load
+  loadHistory();
+});
+</script>
+
+
+<script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+<script src="https://files.bpcontent.cloud/2025/10/07/11/20251007115828-7Y93C0YO.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

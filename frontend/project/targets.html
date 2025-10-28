@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Targets — PocketHeist</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS (keep as-is) -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* tiny helpers that do not change your styling theme */
+    .targets-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 1rem; }
+    .target-card { border-radius: 12px; padding:1rem; background: var(--card-bg, #fff); box-shadow: var(--card-shadow, 0 6px 18px rgba(0,0,0,0.05)); }
+    .badge-style { padding:.25rem .6rem; border-radius:999px; font-weight:600; font-size:.85rem; }
+    .priority-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:.5rem; }
+    .small-muted { color: #6c757d; font-size:.9rem; }
+    .goal-actions .btn { margin-left:.4rem; }
+    .progress-small { height:12px; border-radius:8px; }
+    .goal-meta { font-size:.9rem; color:#4b5563; }
+    .empty-state { padding:2rem; text-align:center; color:#6c757d; }
+    .badge-card { display:inline-flex; align-items:center; gap:.6rem; padding:.5rem .8rem; border-radius:10px; color:#fff; }
+    .badge-card.bronze { background: linear-gradient(90deg,#fca5a5,#f97316); color:#2b0b03; }
+    .badge-card.silver { background: linear-gradient(90deg,#a3a3ff,#7c3aed); color:#fff; }
+    .badge-card.gold { background: linear-gradient(90deg,#f59e0b,#f97316); color:#08203a; }
+    .badge-card.inactive { opacity: .35; filter: grayscale(.3); }
+    .goal-remaining { font-weight:600; }
+    .goal-card .meta { font-size: 0.9rem; color: #6c757d; }
+    .goal-card .contrib-list .small-muted { font-size: .85rem; }
+    .target-card .btn-sm { padding: .28rem .5rem; }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR (unchanged) -->
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" id="navbar">
+    <div class="container">
+      <img src="logo2.png" alt="pocketheist" width="40" height="40" class="me-2">
+      <a class="navbar-brand fw-bold" href="dashboard.html"><h1>PocketHeist</h1></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item"><a class="nav-link " href="dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active" href="targets.html">Targets</a></li>
+          <li class="nav-item"><a class="nav-link" href="split.html">SplitExpense</a></li>
+          <li class="nav-item"><a class="nav-link " href="categories.html">Categories</a></li>
+          <li class="nav-item"><a class="nav-link" href="reminders.html">Reminders</a></li>
+          <li class="nav-item ms-3"><button id="themeToggle"></button></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- MAIN CONTENT -->
+  <main class="container my-4 page-anim">
+
+    <!-- Set Target -->
+    <div class="card p-4 shadow card-hover fade-in">
+      <h4 class="fw-bold mb-2"><i class="bi bi-bullseye text-primary"></i> Set Savings Targets</h4>
+      <p class="small text-muted">Create multiple goals, set priority, deadline and add contributions as you save.</p>
+
+      <form id="targetForm" class="row g-3 mt-2">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Target Type</label>
+          <select id="targetType" class="form-select">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Title</label>
+          <input id="targetTitle" class="form-control" type="text" placeholder="e.g. Trip to Goa" required>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold">Target Amount (₹)</label>
+          <input id="targetAmount" class="form-control" type="number" placeholder="Enter target (₹)" required>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold">Amount saved so far (optional)</label>
+          <input id="targetSaved" class="form-control" type="number" placeholder="₹0">
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-primary w-100 fw-semibold">💾 Save Target</button>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Deadline (optional)</label>
+          <input id="targetDeadline" class="form-control" type="date">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Priority</label>
+          <select id="targetPriority" class="form-select">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Current Target List -->
+    <div class="card p-4 mt-4 shadow card-hover fade-in">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-flag text-success"></i> Your Goals</h6>
+      <div id="goalsContainer" class="row g-3"></div>
+
+      <div class="mt-3">
+        <button id="sampleGoalsBtn" class="btn btn-sm btn-outline-secondary">Add sample goals</button>
+        <button id="clearGoalsBtn" class="btn btn-sm btn-outline-danger ms-2">Clear all local goals</button>
+      </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="card p-4 mt-4 shadow card-hover fade-in">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-award text-warning"></i> Achievement Badges</h6>
+      <div class="d-flex flex-wrap gap-3" id="badgesArea">
+        <div class="badge-card bronze" data-level="bronze">
+          <i class="bi bi-star-fill"></i>
+          <span>Bronze Saver (≥ 50%)</span>
+        </div>
+        <div class="badge-card silver" data-level="silver">
+          <i class="bi bi-trophy-fill"></i>
+          <span>Silver Saver (≥ 75%)</span>
+        </div>
+        <div class="badge-card gold" data-level="gold">
+          <i class="bi bi-gem"></i>
+          <span>Gold Saver (≥ 100%)</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom nav (unchanged) -->
+  <div class="bottom-nav shadow-lg">
+    <a data-page="dashboard" href="dashboard.html"><i class="bi bi-house"></i><span>Home</span></a>
+    <a data-page="targets" href="targets.html" class="active"><i class="bi bi-bullseye"></i><span>Targets</span></a>
+    <a data-page="splitwise" href="split.html"><i class="bi bi-people"></i><span>SplitExpense</span></a>
+    <a data-page="categories" href="categories.html"><i class="bi bi-list"></i><span>Categories</span></a>
+    <a data-page="reminders" href="reminders.html"><i class="bi bi-bell"></i><span>Reminders</span></a>
+  </div>
+
+  <!-- Animated background layers -->
+  <canvas id="galaxy-bg"></canvas>
+  <div id="light-icons-bg"></div>
+  <script src="js/app.js"></script>
+  <script src="js/api.js"></script>
+
+  <script src="js/background.js"></script>
+
+  <!-- small helper lib (keeps file self-contained) -->
+  <script>
+    // small util functions used below
+    function uid(prefix='id'){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+    function fmtCurrency(v){ return '₹' + Number(v || 0).toLocaleString(); }
+    function daysBetween(a,b){
+      const A = new Date(a); const B = new Date(b);
+      return Math.ceil((B - A) / (1000*60*60*24));
+    }
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function todayISO(){ return new Date().toISOString().slice(0,10); }
+    function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  </script>
+
+  <!-- MAIN SCRIPT: create, list, update, delete goals + API fallback to localStorage -->
+  
+    <script type="module">
+  import { apiFetch } from './js/api.js'; // ✅ add this
+
+
+
+  document.addEventListener('DOMContentLoaded', ()=> {
+    // CONFIG
+   const API_BASE = 'http://localhost:5000/api/goals';
+ // expected backend endpoints
+    const STORAGE_KEY = 'ph_userGoals';
+    const userId = "652c4f9a3f2e8c2a7f1e9b30"; // demo user
+
+    // DOM refs
+    const form = document.getElementById('targetForm');
+    const titleInput = document.getElementById('targetTitle');
+    const typeInput = document.getElementById('targetType');
+    const amountInput = document.getElementById('targetAmount');
+    const savedInput = document.getElementById('targetSaved');
+    const deadlineInput = document.getElementById('targetDeadline');
+    const priorityInput = document.getElementById('targetPriority');
+    const goalsContainer = document.getElementById('goalsContainer');
+    const sampleBtn = document.getElementById('sampleGoalsBtn');
+    const clearBtn = document.getElementById('clearGoalsBtn');
+    const badgesArea = document.getElementById('badgesArea');
+
+    // utility: read/write local
+    function loadLocalGoals(){
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch(e){ console.error('local load err', e); return []; }
+    }
+    function saveLocalGoals(list){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    // API wrappers with fallback
+    async function apiFetchAll(){
+      try {
+        const res = await fetch(`${API_BASE}?userId=${userId}`);
+        if (!res.ok) throw new Error('API fetch failed');
+        const data = await res.json();
+        return Array.isArray(data) ? data : (data.goals || []);
+      } catch (err) {
+        console.warn('API fetch failed, using local data', err);
+        return loadLocalGoals();
+      }
+    }
+
+    async function apiCreate(goal){
+      try {
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(goal)
+        });
+        if (!res.ok) throw new Error('API create failed');
+        const data = await res.json();
+        return data.goal || data;
+      } catch(err){
+        console.warn('API create failed, saving locally', err);
+        const list = loadLocalGoals();
+        list.push(goal);
+        saveLocalGoals(list);
+        return goal;
+      }
+    }
+
+    async function apiUpdate(id, patch){
+      try {
+        const res = await fetch(`${API_BASE}/${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(patch)
+        });
+        if (!res.ok) throw new Error('API update failed');
+        const data = await res.json();
+        return data.goal || data;
+      } catch(err){
+        console.warn('API update failed, patching locally', err);
+        const list = loadLocalGoals();
+        const idx = list.findIndex(g=>g.id===id);
+        if (idx>=0) {
+          list[idx] = {...list[idx], ...patch};
+          saveLocalGoals(list);
+          return list[idx];
+        }
+        return null;
+      }
+    }
+
+    async function apiDelete(id){
+      try {
+        const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('API delete failed');
+        return true;
+      } catch(err){
+        console.warn('API delete failed, removing locally', err);
+        const list = loadLocalGoals().filter(g=>g.id !== id);
+        saveLocalGoals(list);
+        return true;
+      }
+    }
+
+    // create goal object from form
+    function buildGoalFromForm(){
+      const title = (titleInput.value || '').trim();
+      const type = typeInput.value;
+      const targetAmount = Number(amountInput.value || 0);
+      const amountSaved = Number(savedInput.value || 0);
+      const deadline = deadlineInput.value || null;
+      const priority = priorityInput.value || 'medium';
+      if (!title || !targetAmount || targetAmount <= 0) return null;
+      return {
+        id: uid('goal'),
+        userId,
+        title,
+        type,
+        targetAmount,
+        amountSaved,
+        deadline,
+        priority,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    // render a single goal card
+    function renderGoalCard(goal){
+      const col = document.createElement('div');
+      col.className = 'col-md-6';
+
+      const card = document.createElement('div');
+      card.className = 'card p-3 goal-card shadow-sm';
+
+      // header
+      const header = document.createElement('div');
+      header.className = 'd-flex justify-content-between align-items-start';
+
+      const left = document.createElement('div');
+      left.innerHTML = `<strong>${escapeHtml(goal.title)}</strong>
+        <div class="meta small-muted">${escapeHtml(goal.type || '')} • Priority: ${escapeHtml(goal.priority || '')}</div>`;
+
+      const right = document.createElement('div');
+      right.className = 'text-end';
+      const targetEl = document.createElement('div');
+      targetEl.className = 'small-muted';
+      targetEl.textContent = `Target: ${fmtCurrency(goal.targetAmount)}`;
+      right.appendChild(targetEl);
+
+      header.appendChild(left);
+      header.appendChild(right);
+
+      // progress
+      const percent = Math.min(100, Math.round((goal.amountSaved / goal.targetAmount) * 100));
+      const progressWrap = document.createElement('div');
+      progressWrap.className = 'mt-3';
+      progressWrap.innerHTML = `
+        <div class="d-flex justify-content-between small-muted mb-1">
+          <div>Saved: <strong>${fmtCurrency(goal.amountSaved)}</strong></div>
+          <div>${percent}%</div>
+        </div>
+        <div class="progress" style="height:12px;">
+          <div class="progress-bar" role="progressbar" style="width:${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      `;
+
+      // remaining + daily/monthly required
+      const rem = Math.max(0, Number(goal.targetAmount) - Number(goal.amountSaved));
+      const remDiv = document.createElement('div');
+      remDiv.className = 'mt-2 d-flex justify-content-between align-items-center';
+      const leftRem = document.createElement('div');
+      leftRem.innerHTML = `<div class="small-muted">Remaining</div><div class="goal-remaining">${fmtCurrency(rem)}</div>`;
+
+      // calculate daily/monthly needed to reach deadline
+      let perDay = '—', perMonth = '—', deadlineLabel = 'No deadline';
+      if (goal.deadline) {
+        deadlineLabel = new Date(goal.deadline).toLocaleDateString();
+        const days = daysBetween(new Date(), new Date(goal.deadline));
+        const daysPositive = Math.max(1, days);
+        perDay = fmtCurrency( (rem / daysPositive).toFixed(2) );
+        perMonth = fmtCurrency( (rem / Math.max(1, Math.ceil(daysPositive / 30))).toFixed(2) );
+      }
+
+      const rightRem = document.createElement('div');
+      rightRem.className = 'text-end small-muted';
+      rightRem.innerHTML = `<div>Deadline: ${deadlineLabel}</div>
+                            <div>Need: ${perDay}/day • ${perMonth}/month</div>`;
+
+      remDiv.appendChild(leftRem);
+      remDiv.appendChild(rightRem);
+
+      // actions row: add contribution, edit, delete
+      const actions = document.createElement('div');
+      actions.className = 'mt-3 d-flex justify-content-between align-items-center';
+
+      const leftActions = document.createElement('div');
+      leftActions.className = 'd-flex align-items-center gap-2';
+
+      const contributeBtn = document.createElement('button');
+      contributeBtn.className = 'btn btn-sm btn-outline-success';
+      contributeBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-sm btn-outline-secondary';
+      editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-outline-danger';
+      delBtn.innerHTML = '<i class="bi bi-trash"></i> Delete';
+
+      leftActions.appendChild(contributeBtn);
+      leftActions.appendChild(editBtn);
+      leftActions.appendChild(delBtn);
+
+      // badge display (based on progress)
+      const badgeWrap = document.createElement('div');
+      badgeWrap.className = 'd-flex align-items-center gap-2';
+      const bronzeEl = document.createElement('div');
+      bronzeEl.className = 'badge-card bronze' + (percent >= 50 ? '' : ' inactive');
+      bronzeEl.innerHTML = '<i class="bi bi-star-fill"></i><small>Bronze</small>';
+      const silverEl = document.createElement('div');
+      silverEl.className = 'badge-card silver' + (percent >= 75 ? '' : ' inactive');
+      silverEl.innerHTML = '<i class="bi bi-trophy-fill"></i><small>Silver</small>';
+      const goldEl = document.createElement('div');
+      goldEl.className = 'badge-card gold' + (percent >= 100 ? '' : ' inactive');
+      goldEl.innerHTML = '<i class="bi bi-gem"></i><small>Gold</small>';
+
+      badgeWrap.appendChild(bronzeEl);
+      badgeWrap.appendChild(silverEl);
+      badgeWrap.appendChild(goldEl);
+
+      actions.appendChild(leftActions);
+      actions.appendChild(badgeWrap);
+
+      // contributions list (shows up to 6 most recent)
+      const contribList = document.createElement('div');
+      contribList.className = 'contrib-list mt-3';
+      const contributions = goal.contributions || [];
+      if (!contributions.length) {
+        contribList.innerHTML = `<div class="small-muted">No contributions yet.</div>`;
+      } else {
+        const ul = document.createElement('div');
+        ul.className = 'd-flex flex-column gap-2';
+        contributions.slice(0,6).forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'd-flex justify-content-between align-items-center';
+          row.innerHTML = `<div><strong>${escapeHtml(c.note || 'Contribution')}</strong><div class="small-muted">${new Date(c.date).toLocaleDateString()}</div></div>
+                           <div class="d-flex align-items-center gap-2">
+                             <div class="fw-semibold">${fmtCurrency(c.amount)}</div>
+                             <button class="btn btn-sm btn-outline-danger btn-del-contrib" data-goal="${goal.id}" data-contrib="${c.id}" title="Delete contribution"><i class="bi bi-trash"></i></button>
+                           </div>`;
+          ul.appendChild(row);
+        });
+        contribList.appendChild(ul);
+      }
+
+      // quick add contribution form (inline)
+      const quickForm = document.createElement('form');
+      quickForm.className = 'd-flex gap-2 align-items-center mt-3';
+      quickForm.innerHTML = `
+        <input name="amount" type="number" class="form-control form-control-sm" placeholder="Amount" required />
+        <input name="note" type="text" class="form-control form-control-sm" placeholder="Note (optional)" />
+        <input name="date" type="date" class="form-control form-control-sm" value="${todayISO()}" />
+        <button class="btn btn-sm btn-primary">Add</button>
+      `;
+      quickForm.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(quickForm);
+        const amt = Number(fd.get('amount')||0);
+        const note = fd.get('note')||'';
+        const date = fd.get('date') || todayISO();
+        addContribution(goal.id, amt, note, date);
+      });
+
+      // wire up buttons
+      contributeBtn.addEventListener('click', ()=> {
+        // focus the quick form amount input (emulate modal-less inline)
+        const amtInput = quickForm.querySelector('input[name="amount"]');
+        amtInput.focus();
+      });
+
+      editBtn.addEventListener('click', async ()=> {
+        // inline edit dialog (prompts)
+        const newTitle = prompt('Edit title', goal.title) || goal.title;
+        const newTarget = Number(prompt('Edit target amount (₹)', goal.targetAmount) || goal.targetAmount);
+        let newSaved = Number(prompt('Amount saved so far (₹)', goal.amountSaved) || goal.amountSaved);
+        const newDeadline = prompt('Deadline (YYYY-MM-DD) or empty', goal.deadline || '') || null;
+        const newPriority = prompt('Priority (low, medium, high)', goal.priority || 'medium') || goal.priority;
+
+        if (!newTitle || !newTarget || newTarget <= 0) { alert('Invalid data. Update cancelled.'); return; }
+        if (isNaN(newSaved) || newSaved < 0) newSaved = 0;
+        const patch = { title: newTitle, targetAmount: newTarget, amountSaved: newSaved, deadline: newDeadline, priority: newPriority };
+        await apiUpdate(goal.id, patch);
+        await refreshGoals();
+      });
+
+      delBtn.addEventListener('click', async ()=> {
+        if (!confirm('Delete this goal?')) return;
+        await apiDelete(goal.id);
+        await refreshGoals();
+      });
+
+      // delete contribution listeners will be attached after insertion
+      card.appendChild(header);
+      card.appendChild(progressWrap);
+      card.appendChild(remDiv);
+      card.appendChild(contribList);
+      card.appendChild(quickForm);
+      card.appendChild(actions);
+
+      col.appendChild(card);
+
+      // attach delete contribution handlers (delegated)
+      setTimeout(()=> {
+        col.querySelectorAll('.btn-del-contrib').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const gid = btn.dataset.goal;
+            const cid = btn.dataset.contrib;
+            if (!confirm('Delete contribution?')) return;
+            await deleteContribution(gid, cid);
+            await refreshGoals();
+          });
+        });
+      }, 20);
+
+      return col;
+    }
+
+    // add contribution
+    async function addContribution(goalId, amount, note, date) {
+      if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+      const list = loadLocalGoals();
+      const gIndex = list.findIndex(x=>x.id===goalId);
+      if (gIndex === -1) {
+        // try to patch server
+        const patch = { contributions: [{ id: uid('c'), amount, note, date }] };
+        await apiUpdate(goalId, patch);
+        await refreshGoals();
+        return;
+      }
+      const g = list[gIndex];
+      g.contributions = g.contributions || [];
+      const c = { id: uid('c'), amount: Number(amount), note: note||'', date: date||todayISO() };
+      g.contributions.unshift(c);
+      g.amountSaved = Number(g.amountSaved || 0) + Number(amount);
+      saveLocalGoals(list);
+      // try to update server in background
+      try { await apiUpdate(goalId, { contributions: g.contributions, amountSaved: g.amountSaved }); } catch(e){ /* fallback already saved locally */ }
+      await refreshGoals();
+    }
+
+    // delete contribution (local-first)
+    async function deleteContribution(goalId, contribId){
+      const list = loadLocalGoals();
+      const g = list.find(x=>x.id===goalId);
+      if (g) {
+        g.contributions = (g.contributions || []).filter(c=>c.id !== contribId);
+        g.amountSaved = (g.contributions || []).reduce((s,c)=> s + Number(c.amount||0), 0);
+        saveLocalGoals(list);
+        // try to update server
+        try { await apiUpdate(goalId, { contributions: g.contributions, amountSaved: g.amountSaved }); } catch(e){ /* ignore */ }
+        return;
+      }
+      // fallback: ask API to delete contribution
+      try { await apiUpdate(goalId, { deleteContributionId: contribId }); } catch(e){ /* ignore */ }
+    }
+
+    // main refresh
+    async function refreshGoals(){
+      goalsContainer.innerHTML = '';
+      const goals = await apiFetchAll();
+      // Save locally as backup
+      saveLocalGoals(goals);
+
+      // sort by priority (high -> low), then nearest deadline then newest
+      goals.sort((a,b)=>{
+        const prio = { high: 0, medium: 1, low: 2 };
+        const pa = prio[a.priority] ?? 1;
+        const pb = prio[b.priority] ?? 1;
+        if (pa !== pb) return pa - pb;
+        if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+        if (a.deadline) return -1;
+        if (b.deadline) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      if (!goals.length) {
+        goalsContainer.innerHTML = `<div class="small-muted">No goals yet. Create one using the form above.</div>`;
+      } else {
+        goals.forEach(g => {
+          const el = renderGoalCard(g);
+          goalsContainer.appendChild(el);
+        });
+      }
+
+      updateGlobalBadges(goals);
+    }
+
+    // badge aggregator: if aggregate crosses thresholds show active
+    function updateGlobalBadges(goals){
+      const totalTarget = goals.reduce((s,g)=> s + Number(g.targetAmount||0), 0);
+      const totalSaved = goals.reduce((s,g)=> s + Number(g.amountSaved||0), 0);
+      const ratio = totalTarget ? (totalSaved / totalTarget) : 0;
+
+      badgesArea.querySelectorAll('[data-level]').forEach(el=>{
+        const lvl = el.getAttribute('data-level');
+        if (lvl === 'bronze') el.classList.toggle('inactive', !(ratio >= 0.5));
+        if (lvl === 'silver') el.classList.toggle('inactive', !(ratio >= 0.75));
+        if (lvl === 'gold') el.classList.toggle('inactive', !(ratio >= 1.0));
+      });
+    }
+
+    // form create
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const goal = buildGoalFromForm();
+      if (!goal) { alert('Please provide title and valid target amount'); return; }
+      // try API create; if it fails it'll fallback to local
+      try {
+        const created = await apiCreate(goal);
+        // ensure local backup is updated: load local list, add if not present
+        const local = loadLocalGoals();
+        if (!local.find(g => g.id === created.id)) {
+          local.push(created);
+          saveLocalGoals(local);
+        }
+      } catch(e){ console.error(e); }
+      form.reset();
+      await refreshGoals();
+    });
+
+    // sample goals generator (client-only)
+    sampleBtn.addEventListener('click', async ()=>{
+      if (!confirm('Add 3 sample goals to test? This app will save them locally and/or via API.')) return;
+      const samples = [
+        { id: uid('goal'), userId, title:'Trip to Goa', type:'monthly', targetAmount:15000, amountSaved:3500, deadline: new Date(Date.now()+45*24*3600*1000).toISOString().slice(0,10), priority:'high', createdAt: new Date().toISOString(), contributions: [{id:uid('c'),amount:3500,note:'Initial',date:todayISO()}] },
+        { id: uid('goal'), userId, title:'New Laptop', type:'monthly', targetAmount:70000, amountSaved:10000, deadline: new Date(Date.now()+180*24*3600*1000).toISOString().slice(0,10), priority:'medium', createdAt: new Date().toISOString(), contributions: [{id:uid('c'),amount:10000,note:'Partial',date:todayISO()}] },
+        { id: uid('goal'), userId, title:'Emergency Fund', type:'monthly', targetAmount:20000, amountSaved:5000, deadline: null, priority:'low', createdAt: new Date().toISOString(), contributions: [{id:uid('c'),amount:5000,note:'Seed',date:todayISO()}] }
+      ];
+      // store locally & try create via API
+      const local = loadLocalGoals();
+      samples.forEach(s => local.push(s));
+      saveLocalGoals(local);
+      // fire API creates (best-effort)
+      for (const s of samples) {
+        try { await apiCreate(s); } catch(e){ /* fallback already saved locally */ }
+      }
+      await refreshGoals();
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      if (!confirm('Delete ALL goals stored locally? This does not affect server-side goals.')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      refreshGoals();
+    });
+
+    // initial load
+    refreshGoals();
+
+    // wire theme + nav if APP exists (keeps your existing behaviour)
+    if (window.APP && typeof APP.initThemeToggle === 'function') {
+      try { APP.initThemeToggle('themeToggle'); APP.setActive('targets'); } catch(e) { /* ignore */ }
+    }
+  });
+  </script>
+
+  
+
+  
+
+  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+  <script src="https://files.bpcontent.cloud/2025/10/07/11/20251007115828-7Y93C0YO.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+ 
+</body>
+</html>

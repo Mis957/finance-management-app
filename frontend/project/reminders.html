@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reminders — PocketHeist</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Bootstrap & Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Custom CSS (your existing file) -->
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* Small local styles to avoid changing your theme */
+.rem-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.rem-meta { font-size:0.9rem; color: rgba(0,0,0,0.6); }
+.badge-countdown { font-size:0.85rem; margin-left:0.5rem; }
+.rem-item-paid { opacity:0.6; text-decoration:line-through; }
+.priority-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; }
+.priority-high { background:#dc3545; }
+.priority-med { background:#ffc107; }
+.priority-low { background:#28a745; }
+.small-muted { color: rgba(0,0,0,0.45); font-size:0.95rem; }
+.controls-row { display:flex; gap:8px; align-items:center; }
+.file-btn { display:none; } /* attachments disabled per your choice */
+.card-hover { transition: box-shadow .15s ease; }
+.card-hover:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR (unchanged) -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" id="navbar">
+  <div class="container">
+    <img src="logo2.png" alt="pocketheist" width="40" height="40" class="me-2">
+    <a class="navbar-brand fw-bold" href="dashboard.html"> <h1> PocketHeist</h1></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="targets.html">Targets</a></li>
+        <li class="nav-item"><a class="nav-link" href="split.html">SplitExpense</a></li>
+        <li class="nav-item"><a class="nav-link" href="categories.html">Categories</a></li>
+        <li class="nav-item"><a class="nav-link active" href="reminders.html">Reminders</a></li>
+        <li class="nav-item ms-3"><button id="themeToggle"></button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="container my-4 page-anim">
+  <!-- Add Reminder Form -->
+  <div class="card p-4 shadow card-hover fade-in">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h4 class="fw-semibold">Payment Reminders</h4>
+        <p class="small text-muted">Add upcoming bills or payments to stay organized.</p>
+      </div>
+
+      <!-- small quick controls -->
+      <div class="d-flex gap-2 align-items-center">
+        <button id="exportBtn" class="btn btn-outline-secondary btn-sm">Export</button>
+        <input id="importFile" type="file" accept="application/json" class="form-control form-control-sm" style="width:0.1px; opacity:0; position:absolute;" />
+        <button id="importBtn" class="btn btn-outline-secondary btn-sm">Import</button>
+        <button id="notifyPermBtn" class="btn btn-sm btn-outline-primary" title="Enable browser notifications">🔔 Notify</button>
+        <button id="clearPassedBtn" class="btn btn-sm btn-outline-danger" title="Remove past paid reminders">Clear Paid</button>
+      </div>
+    </div>
+
+    <form id="remForm" class="row g-2 mt-3">
+      <div class="col-md-5">
+        <input class="form-control" id="titleInput" name="title" placeholder="Title e.g. Tuition Fee" required>
+      </div>
+
+      <div class="col-md-2">
+        <input class="form-control" id="dueInput" name="due" type="date" required>
+      </div>
+
+      <div class="col-md-2">
+        <input class="form-control" id="amountInput" name="amount" type="number" placeholder="Amount (₹)">
+      </div>
+
+      <div class="col-md-2">
+        <select id="priorityInput" class="form-select">
+          <option value="medium" selected>Priority: Medium</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+
+      <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-primary w-100 fw-semibold">💾 Add</button>
+      </div>
+
+      <div class="col-12 mt-2">
+        <input class="form-control" id="notesInput" name="notes" placeholder="Notes (optional)">
+      </div>
+
+      <div class="col-12 mt-2 d-flex gap-2">
+        <label class="small text-muted mb-0">Recurring</label>
+        <select id="recurringInput" class="form-select form-select-sm w-auto">
+          <option value="none" selected>None</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Controls: search/filter/sort -->
+  <div class="d-flex gap-2 align-items-center mt-3">
+    <input id="searchInput" class="form-control form-control-sm" placeholder="Search reminders, amounts or notes" style="max-width:420px;">
+    <select id="filterStatus" class="form-select form-select-sm w-auto">
+      <option value="all">All</option>
+      <option value="upcoming">Upcoming</option>
+      <option value="overdue">Overdue</option>
+      <option value="paid">Paid</option>
+    </select>
+    <select id="filterPriority" class="form-select form-select-sm w-auto">
+      <option value="all">All priorities</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <select id="sortBy" class="form-select form-select-sm w-auto">
+      <option value="due_asc">Due (Soonest)</option>
+      <option value="due_desc">Due (Latest)</option>
+      <option value="amount_desc">Amount (High)</option>
+      <option value="amount_asc">Amount (Low)</option>
+    </select>
+    <div class="ms-auto small-muted" id="summaryText">0 reminders</div>
+  </div>
+
+  <!-- Reminder List -->
+  <div class="card p-4 mt-3 shadow card-hover fade-in">
+    <h6 class="fw-bold mb-3">📅 Upcoming Reminders</h6>
+    <div id="remList" class="list-group list-group-flush"></div>
+  </div>
+</main>
+
+<!-- Bottom Navigation (unchanged) -->
+<div class="bottom-nav shadow-lg">
+  <a data-page="dashboard" href="dashboard.html"><i class="bi bi-house"></i><span>Home</span></a>
+  <a data-page="targets" href="targets.html"><i class="bi bi-bullseye"></i><span>Targets</span></a>
+  <a data-page="splitwise" href="split.html"><i class="bi bi-people"></i><span>SplitExpense</span></a>
+  <a data-page="categories" href="categories.html"><i class="bi bi-list"></i><span>Categories</span></a>
+  <a data-page="reminders" href="reminders.html" class="active"><i class="bi bi-bell-fill"></i><span>Reminders</span></a>
+</div>
+
+<!-- Animated background layers (unchanged) -->
+<canvas id="galaxy-bg"></canvas>
+<div id="light-icons-bg"></div>
+
+<script src="js/background.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+/* === Reminders logic: persistent, editable, recurring, notifications, export/import === */
+(function(){
+  const STORAGE_KEY = 'ph_reminders_v1';
+
+  // helpers
+  function uid(prefix='id'){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function parseDate(d){ return new Date(d + 'T00:00:00'); }
+  function formatDisplay(d){ return new Date(d).toLocaleDateString(); }
+  function currency(v){ if (!v && v !== 0) return ''; return '₹' + Number(v).toLocaleString(); }
+  function daysBetween(a,b){ const ms=24*3600*1000; return Math.ceil((parseDate(b)-parseDate(a))/ms); }
+
+  // DOM
+  const remForm = document.getElementById('remForm');
+  const remList = document.getElementById('remList');
+  const titleInput = document.getElementById('titleInput');
+  const dueInput = document.getElementById('dueInput');
+  const amountInput = document.getElementById('amountInput');
+  const notesInput = document.getElementById('notesInput');
+  const priorityInput = document.getElementById('priorityInput');
+  const recurringInput = document.getElementById('recurringInput');
+
+  const searchInput = document.getElementById('searchInput');
+  const filterStatus = document.getElementById('filterStatus');
+  const filterPriority = document.getElementById('filterPriority');
+  const sortBy = document.getElementById('sortBy');
+  const summaryText = document.getElementById('summaryText');
+
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  const notifyPermBtn = document.getElementById('notifyPermBtn');
+  const clearPaidBtn = document.getElementById('clearPassedBtn');
+
+  // storage
+  function loadReminders(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e){ return []; } }
+  function saveReminders(list){ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); renderList(); }
+
+  // initial seed if none
+  if (!localStorage.getItem(STORAGE_KEY)){
+    const sample = [
+      { id: uid('r'), title:'Electricity Bill', due: todayISO(), amount:1200, notes:'Pay via netbanking', priority:'high', recurring:'monthly', paid:false },
+      { id: uid('r'), title:'Netflix', due: new Date(Date.now()+3*24*3600*1000).toISOString().slice(0,10), amount:499, notes:'Auto-renew', priority:'low', recurring:'monthly', paid:false }
+    ];
+    saveReminders(sample);
+  }
+
+  // form submit (add)
+  remForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const list = loadReminders();
+    const title = titleInput.value.trim();
+    const due = dueInput.value || todayISO();
+    const amount = amountInput.value ? Number(amountInput.value) : 0;
+    const notes = notesInput.value.trim();
+    const priority = priorityInput.value || 'medium';
+    const recurring = recurringInput.value || 'none';
+    if (!title) return alert('Enter title');
+    const item = { id: uid('r'), title, due, amount, notes, priority, recurring, paid:false, createdAt: new Date().toISOString() };
+    list.push(item);
+    saveReminders(list);
+    remForm.reset();
+    dueInput.value = '';
+    // send a browser notification for near-due if permission enabled
+    maybeNotify(`Reminder created: ${title}`, `Due ${formatDisplay(due)} ${amount?currency(amount):''}`);
+  });
+
+  // render list with filters & sorting
+  function renderList(){
+    const list = loadReminders();
+    const q = (searchInput.value || '').trim().toLowerCase();
+    const status = filterStatus.value;
+    const pFilter = filterPriority.value;
+    const sort = sortBy.value;
+
+    let items = list.slice();
+
+    // filters
+    items = items.filter(it => {
+      if (pFilter !== 'all' && it.priority !== pFilter) return false;
+      if (status === 'upcoming' && it.paid) return false;
+      if (status === 'paid' && !it.paid) return false;
+      if (status === 'overdue') {
+        if (it.paid) return false;
+        return parseDate(it.due) < parseDate(todayISO());
+      }
+      return true;
+    });
+
+    // search
+    if (q){
+      items = items.filter(it => {
+        return it.title.toLowerCase().includes(q)
+          || (it.notes && it.notes.toLowerCase().includes(q))
+          || String(it.amount).includes(q)
+          || it.due.includes(q);
+      });
+    }
+
+    // sort
+    items.sort((a,b)=>{
+      if (sort === 'due_asc') return new Date(a.due) - new Date(b.due);
+      if (sort === 'due_desc') return new Date(b.due) - new Date(a.due);
+      if (sort === 'amount_desc') return (b.amount||0) - (a.amount||0);
+      if (sort === 'amount_asc') return (a.amount||0) - (b.amount||0);
+      return 0;
+    });
+
+    // summary
+    summaryText.textContent = `${list.length} reminders • ${items.length} shown`;
+
+    // build DOM
+    remList.innerHTML = '';
+    if (items.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'small text-muted';
+      empty.textContent = 'No reminders found.';
+      remList.appendChild(empty);
+      return;
+    }
+
+    items.forEach(it => {
+      const li = document.createElement('div');
+      li.className = 'list-group-item d-flex flex-column gap-2';
+      if (it.paid) li.classList.add('rem-item-paid');
+
+      const topRow = document.createElement('div');
+      topRow.className = 'rem-row';
+
+      const left = document.createElement('div');
+      left.style.flex = '1';
+
+      const priorityDot = document.createElement('span');
+      priorityDot.className = 'priority-dot ' + (it.priority === 'high' ? 'priority-high' : (it.priority === 'low' ? 'priority-low' : 'priority-med'));
+
+      const titleEl = document.createElement('div');
+      titleEl.innerHTML = `<strong>${escapeHtml(it.title)}</strong> <span class="small-muted">• ${it.notes ? escapeHtml(it.notes) : ''}</span>`;
+      titleEl.style.display = 'inline-block';
+      left.appendChild(priorityDot);
+      left.appendChild(titleEl);
+
+      // meta (date, countdown, recurring)
+      const meta = document.createElement('div');
+      meta.className = 'rem-meta';
+      const dueText = formatDisplay(it.due);
+      const days = daysBetween(todayISO(), it.due);
+      let countdown = '';
+      if (it.paid) countdown = `<span class="badge bg-success">Paid</span>`;
+      else if (parseDate(it.due) < parseDate(todayISO())) countdown = `<span class="badge bg-danger">Overdue</span>`;
+      else if (days <= 2) countdown = `<span class="badge bg-warning text-dark">Due in ${days}d</span>`;
+      else countdown = `<span class="badge bg-info text-dark">Due in ${days}d</span>`;
+
+      meta.innerHTML = `${dueText} ${countdown} ${it.recurring && it.recurring !== 'none' ? '<span class="badge bg-secondary ms-2">'+it.recurring+'</span>' : ''}`;
+
+      left.appendChild(meta);
+
+      // right controls
+      const right = document.createElement('div');
+      right.className = 'controls-row';
+
+      const amountEl = document.createElement('div');
+      amountEl.className = 'fw-semibold';
+      amountEl.textContent = currency(it.amount);
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'btn btn-sm btn-outline-success';
+      toggleBtn.innerHTML = it.paid ? '<i class="bi bi-arrow-counterclockwise"></i> Mark unpaid' : '<i class="bi bi-check2-circle"></i> Mark paid';
+
+      toggleBtn.addEventListener('click', ()=> {
+        togglePaid(it.id);
+      });
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-sm btn-outline-secondary';
+      editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+      editBtn.title = 'Edit';
+
+      editBtn.addEventListener('click', ()=> openEditModal(it.id));
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-outline-danger';
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.title = 'Delete';
+      delBtn.addEventListener('click', ()=> {
+        if (!confirm('Delete this reminder?')) return;
+        deleteReminder(it.id);
+      });
+
+      right.appendChild(amountEl);
+      right.appendChild(toggleBtn);
+      right.appendChild(editBtn);
+      right.appendChild(delBtn);
+
+      topRow.appendChild(left);
+      topRow.appendChild(right);
+
+      li.appendChild(topRow);
+
+      remList.appendChild(li);
+    });
+  }
+
+  // escape helper
+  function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+  // toggle paid & handle recurring
+  function togglePaid(id){
+    const list = loadReminders();
+    const it = list.find(x=>x.id===id);
+    if (!it) return;
+    it.paid = !it.paid;
+
+    // if marking paid and recurring -> create next occurrence automatically
+    if (it.paid && it.recurring && it.recurring !== 'none'){
+      const nextDate = getNextDate(it.due, it.recurring);
+      if (nextDate){
+        // create a new reminder for next occurrence (same details)
+        const newRem = { ...it, id: uid('r'), due: nextDate, paid:false, createdAt: new Date().toISOString() };
+        // keep original recurring setting
+        list.push(newRem);
+      }
+    }
+
+    saveReminders(list);
+  }
+
+  function getNextDate(dateStr, recurring){
+    const d = parseDate(dateStr);
+    if (recurring === 'weekly') d.setDate(d.getDate() + 7);
+    if (recurring === 'monthly') d.setMonth(d.getMonth() + 1);
+    if (recurring === 'yearly') d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().slice(0,10);
+  }
+
+  function deleteReminder(id){
+    let list = loadReminders();
+    list = list.filter(x=>x.id !== id);
+    saveReminders(list);
+  }
+
+  // edit modal (simple prompt-based to keep styling unchanged)
+  function openEditModal(id){
+    const list = loadReminders();
+    const it = list.find(x=>x.id===id);
+    if (!it) return;
+    const newTitle = prompt('Edit title', it.title);
+    if (newTitle === null) return; // cancel
+    const newDue = prompt('Edit due date (YYYY-MM-DD)', it.due);
+    if (newDue === null) return;
+    const newAmount = prompt('Edit amount (number)', it.amount || 0);
+    if (newAmount === null) return;
+    const newNotes = prompt('Edit notes', it.notes || '');
+    if (newNotes === null) return;
+    const newPriority = prompt('Priority (high/medium/low)', it.priority || 'medium');
+    if (newPriority === null) return;
+    const newRec = prompt('Recurring (none/weekly/monthly/yearly)', it.recurring || 'none');
+    if (newRec === null) return;
+
+    // basic validation
+    it.title = newTitle.trim() || it.title;
+    it.due = newDue.trim() || it.due;
+    it.amount = Number(newAmount) || 0;
+    it.notes = newNotes;
+    it.priority = ['high','medium','low'].includes(newPriority) ? newPriority : 'medium';
+    it.recurring = ['none','weekly','monthly','yearly'].includes(newRec) ? newRec : 'none';
+    saveReminders(list);
+  }
+
+  // delete all paid reminders
+  clearPaidBtn.addEventListener('click', ()=> {
+    if (!confirm('Delete all reminders that are marked paid?')) return;
+    let list = loadReminders();
+    list = list.filter(x => !x.paid);
+    saveReminders(list);
+  });
+
+  // search & filters events
+  [searchInput, filterStatus, filterPriority, sortBy].forEach(el => el.addEventListener('input', renderList));
+
+  // export/import
+  exportBtn.addEventListener('click', ()=>{
+    const data = loadReminders();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pocketheist-reminders.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener('click', ()=> importFile.click());
+  importFile.addEventListener('change', async (ev)=>{
+    const f = ev.target.files[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) return alert('Invalid file format');
+      const existing = loadReminders();
+      const merged = existing.concat(parsed.map(p => ({ ...p, id: uid('r') })));
+      saveReminders(merged);
+      alert('Imported reminders (merged).');
+    } catch (err){
+      alert('Import failed: ' + err.message);
+    } finally {
+      importFile.value = '';
+    }
+  });
+
+  // notifications
+  function maybeNotify(title, body){
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted'){
+      new Notification(title, { body });
+    }
+  }
+
+  notifyPermBtn.addEventListener('click', async ()=>{
+    if (!('Notification' in window)) return alert('Your browser does not support notifications');
+    if (Notification.permission === 'granted') return alert('Notifications already enabled');
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') alert('Notifications enabled — we may notify you for near-due reminders.');
+      else alert('Notifications not permitted.');
+    } catch(e){ console.error(e); alert('Unable to enable notifications'); }
+  });
+
+  // periodic check to fire notifications for reminders due today or soon
+  function checkDueAndNotify(){
+    const list = loadReminders();
+    const today = todayISO();
+    list.forEach(it => {
+      if (it.paid) return;
+      const days = daysBetween(today, it.due);
+      // notify if due today or tomorrow and at least once (use a simple flag in localStorage to avoid repeating)
+      const key = `notified_${it.id}_${it.due}`;
+      if ((days <= 1 && days >= 0) && Notification.permission === 'granted' && !localStorage.getItem(key)){
+        new Notification(`Reminder: ${it.title}`, { body:`Due ${formatDisplay(it.due)} ${it.amount ? currency(it.amount) : ''}` });
+        localStorage.setItem(key, '1');
+      }
+    });
+  }
+
+  // schedule check every minute
+  setInterval(checkDueAndNotify, 60*1000);
+  // run once on load
+  setTimeout(checkDueAndNotify, 2000);
+
+  // small helper to keep UI alive if APP script exists
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try { if (window.APP && APP.initThemeToggle) { APP.initThemeToggle('themeToggle'); APP.setActive('reminders'); } } catch(e){}
+    renderList();
+  });
+
+  // expose API for console/debug
+  window.RemindersAPI = {
+    load: loadReminders,
+    save: saveReminders,
+    add: function(r){ const list=loadReminders(); list.push(r); saveReminders(list); },
+    clearAll: function(){ if(confirm('Delete ALL reminders?')){ localStorage.removeItem(STORAGE_KEY); renderList(); } }
+  };
+
+})(); // end module
+</script>
+
+<!-- botpress / other scripts kept (deferred) -->
+<script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+<script src="https://files.bpcontent.cloud/2025/10/07/11/20251007115828-7Y93C0YO.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PocketHeist</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="auth-container text-center">
+    <img src="logo2.png" alt="pocketheist" width="60" height="60" class="mb-3">
+    <h2 class="fw-bold mb-3">Welcome Back 👋</h2>
+    <p class="text-muted small mb-4">Login to continue your journey</p>
+
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="loginEmail" placeholder="Email" required class="form-control mb-3">
+      <div class="position-relative mb-3">
+        <input type="password" id="loginPassword" placeholder="Password" required class="form-control">
+        <i class="bi bi-eye-slash toggle-pass" id="togglePassword"></i>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+
+    <!-- Google Sign-In Button -->
+    <button id="googleLogin" class="google-btn">
+      <div class="google-icon"></div>
+      Continue with Google
+    </button>
+
+    <div class="extra-options mt-3">
+      <p class="small mb-1">Don’t have an account? <a href="signup.html">Sign up</a></p>
+      <p class="small"><a href="forgot.html">Forgot password?</a></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  try {
+    const res = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Login failed');
+      return;
+    }
+
+    // Save token and user
+    localStorage.setItem('ph_token', data.token);
+    localStorage.setItem('ph_user', JSON.stringify(data.user || {}));
+
+    // Redirect to dashboard (frontend)
+    window.location.href = 'http://localhost:3000/project/dashboard.html';
+  } catch (err) {
+    console.error(err);
+    alert('Network error');
+  }
+});
+
+// Google Button — redirect user to backend google route to start OAuth flow
+document.getElementById('googleLogin').addEventListener('click', () => {
+  // This will open backend which starts passport google flow and then
+  // backend will redirect back to frontend with ?token=...
+  window.location.href = 'http://localhost:5000/api/auth/google';
+});
+</script>
+
+</body>
+</html>

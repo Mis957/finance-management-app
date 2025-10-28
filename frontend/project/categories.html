@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Categories — PocketHeist</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Your existing custom CSS (no changes) -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* small local helpers (kept minimal so styling is not affected) */
+    .cat-color-dot { width:14px; height:14px; border-radius:50%; display:inline-block; margin-right:8px; vertical-align:middle; }
+    .category-card { transition: transform .12s; }
+    .category-card:hover { transform: translateY(-3px); }
+    .small-muted { font-size:0.85rem; color:#6c757d; }
+    .inline-input { display:inline-block; width:auto; vertical-align:middle; }
+    .search-input { max-width:360px; }
+    .expense-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed rgba(0,0,0,0.03); }
+    .expense-row:last-child { border-bottom:none; }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR (keeps same structure) -->
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" id="navbar">
+    <div class="container">
+      <img src="logo2.png" alt="pocketheist" width="40" height="40" class="me-2">
+      <a class="navbar-brand fw-bold" href="dashboard.html"><h1>PocketHeist</h1></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="targets.html">Targets</a></li>
+          <li class="nav-item"><a class="nav-link" href="split.html">SplitExpense</a></li>
+          <li class="nav-item"><a class="nav-link active" href="categories.html">Categories</a></li>
+          <li class="nav-item"><a class="nav-link" href="reminders.html">Reminders</a></li>
+          <li class="nav-item ms-3"><button id="themeToggle"></button></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="container mt-4 page-anim">
+
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h2 class="fw-semibold">Category-Wise Expenses</h2>
+        <div class="small-muted">Manage categories and add expenses — data is saved on your device.</div>
+      </div>
+
+      <div class="d-flex gap-2 align-items-center">
+        <input id="searchInput" class="form-control form-control-sm search-input" placeholder="Search categories or expense..." />
+        <button id="sampleBtn" class="btn btn-sm btn-outline-secondary">Generate sample data</button>
+        <button id="clearAllBtn" class="btn btn-sm btn-outline-danger">Clear all</button>
+      </div>
+    </div>
+
+    <!-- TOP SUMMARY -->
+    <div id="topSummary" class="card p-3 mb-4 shadow-sm">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0">Total Spent</h6>
+          <div id="overallTotal" class="fs-4 fw-semibold">₹0</div>
+          <div id="categoryCount" class="small-muted">0 categories</div>
+        </div>
+
+        <!-- add category quick -->
+        <div>
+          <form id="addCategoryForm" class="d-flex gap-2 align-items-center">
+            <input id="newCategoryName" class="form-control form-control-sm" placeholder="New category name" required />
+            <input id="newCategoryColor" type="color" value="#61a2e8" title="Pick color" style="width:44px; height:34px; padding:0; border:none;" />
+            <button class="btn btn-primary btn-sm">➕ Add Category</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add expense by category (dropdown) -->
+    <div class="card p-4 shadow card-hover fade-in mb-4">
+      <h6>Add Expense by Category</h6>
+      <form id="categoryExpenseForm" class="row g-3 mt-2">
+        <div class="col-md-3">
+          <select id="expenseCategorySelect" class="form-select" required>
+            <option value="">Choose category</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <input id="expenseAmount" class="form-control" type="number" placeholder="Amount (₹)" required />
+        </div>
+
+        <div class="col-md-3">
+          <input id="expenseDescription" class="form-control" placeholder="Description (optional)" />
+        </div>
+
+        <div class="col-md-2">
+          <input id="expenseDate" class="form-control" type="date" />
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-primary w-100 fw-semibold">➕ Add</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Category cards grid -->
+    <div id="categoriesGrid" class="row g-3"></div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav shadow-lg">
+    <a data-page="dashboard" href="dashboard.html"><i class="bi bi-house"></i><span>Home</span></a>
+    <a data-page="targets" href="targets.html"><i class="bi bi-bullseye"></i><span>Targets</span></a>
+    <a data-page="splitwise" href="split.html"><i class="bi bi-people"></i><span>SplitExpense</span></a>
+    <a data-page="categories" href="categories.html" class="active"><i class="bi bi-list"></i><span>Categories</span></a>
+    <a data-page="reminders" href="reminders.html"><i class="bi bi-bell"></i><span>Reminders</span></a>
+  </div>
+
+  <!-- Animated background and scripts (preserve) -->
+  <canvas id="galaxy-bg"></canvas>
+  <div id="light-icons-bg"></div>
+  <script src="js/background.js"></script>
+
+  <!-- your app helpers (APP object) -->
+  <script src="js/app.js"></script>
+
+  <script>
+  // categories.html script
+  (function(){
+    const STORAGE_KEY = 'categoriesData';
+
+    // Data schema:
+    // { categories: [{ id, name, color, expenses: [{ id, amount, description, date }] }] }
+
+    // --- util helpers ---
+    function uid(prefix='id'){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+    function formatCurrency(v){ return '₹' + Number(v || 0).toLocaleString(); }
+    function formatDateISO(d){ // returns YYYY-MM-DD
+      const dt = new Date(d);
+      if (isNaN(dt)) return new Date().toISOString().slice(0,10);
+      return dt.toISOString().slice(0,10);
+    }
+    function colorForIndex(i){
+      const palette = ['#61a2e8','#8f50f4','#4ec9b0','#f97316','#fd7e14','#20c997','#e83e8c','#6610f2'];
+      return palette[i % palette.length];
+    }
+
+    // --- storage ---
+    function loadData(){
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { categories: [] };
+        return JSON.parse(raw);
+      } catch(e){
+        console.error('loadData error', e);
+        return { categories: [] };
+      }
+    }
+    function saveData(data){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      refreshUI();
+    }
+
+    // create initial structure if missing
+    function ensureDefault(){
+      const d = loadData();
+      if (!d.categories) d.categories = [];
+      saveData(d);
+    }
+
+    // --- UI references ---
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    const overallTotalEl = document.getElementById('overallTotal');
+    const categoryCountEl = document.getElementById('categoryCount');
+    const expenseCategorySelect = document.getElementById('expenseCategorySelect');
+    const searchInput = document.getElementById('searchInput');
+
+    // Populate category dropdown used for adding expenses
+    function rebuildCategorySelect(data){
+      const sel = expenseCategorySelect;
+      sel.innerHTML = '<option value="">Choose category</option>';
+      data.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    // --- Render functions ---
+    function renderCategoryCard(cat, index, filterText=''){
+      // create card col
+      const col = document.createElement('div');
+      col.className = 'col-md-6';
+
+      const card = document.createElement('div');
+      card.className = 'card p-3 category-card shadow-sm';
+
+      // header row: title + controls
+      const header = document.createElement('div');
+      header.className = 'd-flex justify-content-between align-items-start mb-2';
+
+      const left = document.createElement('div');
+      const colorDot = document.createElement('span');
+      colorDot.className = 'cat-color-dot';
+      colorDot.style.background = cat.color;
+
+      const title = document.createElement('span');
+      title.innerHTML = `<strong>${escapeHtml(cat.name)}</strong>`;
+
+      left.appendChild(colorDot);
+      left.appendChild(title);
+
+      const right = document.createElement('div');
+      right.className = 'd-flex gap-2';
+
+      const total = (cat.expenses || []).reduce((s,x)=>s + Number(x.amount || 0), 0);
+      const badge = document.createElement('span');
+      badge.className = 'badge bg-primary align-self-start';
+      badge.textContent = formatCurrency(total);
+
+      // edit, delete buttons
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-sm btn-outline-secondary';
+      editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+      editBtn.title = 'Edit category name';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-outline-danger';
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.title = 'Delete category';
+
+      right.appendChild(badge);
+      right.appendChild(editBtn);
+      right.appendChild(delBtn);
+
+      header.appendChild(left);
+      header.appendChild(right);
+
+      // expenses list
+      const list = document.createElement('div');
+      list.className = 'mt-2';
+
+      // filter expenses by search
+      const lowerFilter = (filterText || '').trim().toLowerCase();
+      const expensesToShow = (cat.expenses || []).filter(ex => {
+        if (!lowerFilter) return true;
+        return ex.description?.toLowerCase().includes(lowerFilter) || String(ex.amount).includes(lowerFilter);
+      });
+
+      if (expensesToShow.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'small-muted';
+        empty.textContent = 'No expenses yet.';
+        list.appendChild(empty);
+      } else {
+        expensesToShow.forEach(exp => {
+          const row = document.createElement('div');
+          row.className = 'expense-row';
+
+          const leftInfo = document.createElement('div');
+          leftInfo.innerHTML = `<div><strong>${escapeHtml(exp.description || '—')}</strong></div>
+                                <div class="small-muted">${formatDateDisplay(exp.date)}</div>`;
+
+          const rightInfo = document.createElement('div');
+          rightInfo.className = 'd-flex align-items-center gap-2';
+          const amt = document.createElement('div');
+          amt.className = 'fw-semibold';
+          amt.textContent = formatCurrency(exp.amount);
+
+          const del = document.createElement('button');
+          del.className = 'btn btn-sm btn-outline-danger';
+          del.innerHTML = '<i class="bi bi-trash"></i>';
+          del.title = 'Delete expense';
+
+          del.addEventListener('click', ()=> {
+            if (!confirm('Delete this expense?')) return;
+            removeExpense(cat.id, exp.id);
+          });
+
+          rightInfo.appendChild(amt);
+          rightInfo.appendChild(del);
+
+          row.appendChild(leftInfo);
+          row.appendChild(rightInfo);
+
+          list.appendChild(row);
+        });
+      }
+
+      // footer: quick add in this category
+      const footer = document.createElement('div');
+      footer.className = 'mt-3';
+      footer.innerHTML = `
+        <form class="d-flex gap-2 align-items-center quick-add-form">
+          <input name="amount" type="number" class="form-control form-control-sm" placeholder="Amount" required />
+          <input name="desc" type="text" class="form-control form-control-sm" placeholder="Description" />
+          <input name="date" type="date" class="form-control form-control-sm" />
+          <button class="btn btn-sm btn-primary">Add</button>
+        </form>
+      `;
+      const quickForm = footer.querySelector('form');
+      quickForm.addEventListener('submit', (ev)=>{
+        ev.preventDefault();
+        const fd = new FormData(quickForm);
+        const amount = Number(fd.get('amount') || 0);
+        const desc = fd.get('desc') || '';
+        const date = fd.get('date') || formatDateISO(new Date());
+        if (!amount) { alert('Enter amount'); return; }
+        addExpenseToCategory(cat.id, { amount, description: desc, date });
+        quickForm.reset();
+      });
+
+      card.appendChild(header);
+      card.appendChild(list);
+      card.appendChild(footer);
+
+      // edit & delete handlers (category)
+      editBtn.addEventListener('click', ()=> {
+        const newName = prompt('Edit category name', cat.name);
+        if (newName && newName.trim()) updateCategoryName(cat.id, newName.trim());
+      });
+
+      delBtn.addEventListener('click', ()=> {
+        if (!confirm(`Delete category "${cat.name}" and all its expenses?`)) return;
+        removeCategory(cat.id);
+      });
+
+      col.appendChild(card);
+      return col;
+    }
+
+    // escape helper
+    function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function formatDateDisplay(d){
+      if (!d) return '';
+      // show dd/mm/yyyy
+      const dt = new Date(d);
+      if (isNaN(dt)) return '';
+      return dt.toLocaleDateString('en-GB');
+    }
+
+    // --- data operations ---
+    function addCategory(name, color){
+  const data = loadData();
+  const id = uid('cat');
+
+  // Find index after default categories (Food, Transport, Groceries)
+  const defaultCount = 3;  
+  const newCategory = { id, name, color: color || colorForIndex(data.categories.length), expenses: [] };
+
+  // Insert new category at desired position (just after Transport/Groceries)
+  data.categories.splice(defaultCount, 0, newCategory);
+
+  saveData(data);
+}
+
+
+    function updateCategoryName(catId, newName){
+      const data = loadData();
+      const cat = data.categories.find(c=>c.id===catId);
+      if (!cat) return;
+      cat.name = newName;
+      saveData(data);
+    }
+
+    function removeCategory(catId){
+      const data = loadData();
+      data.categories = data.categories.filter(c=>c.id !== catId);
+      saveData(data);
+    }
+
+    function addExpenseToCategory(catId, exp){
+      const data = loadData();
+      const cat = data.categories.find(c=>c.id===catId);
+      if (!cat) return;
+      const newExp = { id: uid('exp'), amount: Number(exp.amount), description: exp.description||'', date: formatDateISO(exp.date || new Date()) };
+      cat.expenses.push(newExp);
+      saveData(data);
+    }
+
+    function removeExpense(catId, expId){
+      const data = loadData();
+      const cat = data.categories.find(c=>c.id===catId);
+      if (!cat) return;
+      cat.expenses = cat.expenses.filter(x => x.id !== expId);
+      saveData(data);
+    }
+
+    // --- UI refresh ---
+    function refreshUI(){
+      const data = loadData();
+      const q = (searchInput.value || '').trim();
+
+      // totals
+      const overall = data.categories.reduce((s,c)=> s + (c.expenses || []).reduce((a,b)=> a + Number(b.amount||0), 0), 0);
+      overallTotalEl.textContent = formatCurrency(overall);
+      categoryCountEl.textContent = `${data.categories.length} categories`;
+
+      // category select & grid
+      rebuildCategorySelect(data);
+
+      categoriesGrid.innerHTML = '';
+      // apply search filter for categories (search matches category name OR expense desc/amount)
+      const lower = q.toLowerCase();
+      const filtered = data.categories.filter(cat=>{
+        if (!lower) return true;
+        if (cat.name.toLowerCase().includes(lower)) return true;
+        if ((cat.expenses||[]).some(e => (e.description||'').toLowerCase().includes(lower) || String(e.amount).includes(lower))) return true;
+        return false;
+      });
+
+      filtered.forEach((cat, i)=> {
+        const col = renderCategoryCard(cat, i, q);
+        categoriesGrid.appendChild(col);
+      });
+    }
+
+    // --- wire forms ---
+    // add category form
+    document.getElementById('addCategoryForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('newCategoryName').value.trim();
+      const color = document.getElementById('newCategoryColor').value;
+      if (!name) return alert('Enter category name');
+      addCategory(name, color);
+      document.getElementById('newCategoryName').value = '';
+    });
+
+    // add expense main form
+    document.getElementById('categoryExpenseForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const catId = document.getElementById('expenseCategorySelect').value;
+      const amount = Number(document.getElementById('expenseAmount').value || 0);
+      const desc = document.getElementById('expenseDescription').value || '';
+      const date = document.getElementById('expenseDate').value || formatDateISO(new Date());
+      if (!catId) return alert('Select a category');
+      if (!amount || amount <= 0) return alert('Enter a valid amount');
+      addExpenseToCategory(catId, { amount, description: desc, date });
+      e.target.reset();
+    });
+
+    // search
+    searchInput.addEventListener('input', () => {
+      refreshUI();
+    });
+
+    // sample data generation
+    document.getElementById('sampleBtn').addEventListener('click', ()=>{
+      if (!confirm('Create sample categories & expenses? This won\'t overwrite existing data (it appends).')) return;
+      const data = loadData();
+      const sampleCats = [
+        { name:'Food', color:'#61a2e8' },
+        { name:'Transport', color:'#28a745' },
+        { name:'Shopping', color:'#f472b6' },
+        { name:'Bills', color:'#ffc107' },
+        { name:'Entertainment', color:'#fd7e14' },
+      ];
+      sampleCats.forEach((sc,i)=>{
+        const catId = uid('cat');
+        const expenses = [];
+        for (let d=0; d<6; d++){
+          expenses.push({
+            id: uid('exp'),
+            amount: Math.floor(Math.random()*300)+50,
+            description: ['Lunch','Taxi','Groceries','Movie','Snack'][Math.floor(Math.random()*5)],
+            date: formatDateISO(new Date(Date.now() - (Math.random()*20|0)*24*3600*1000))
+          });
+        }
+        data.categories.push({ id: catId, name: sc.name, color: sc.color, expenses });
+      });
+      saveData(data);
+      alert('Sample data added — reload to see.');
+    });
+
+    // clear all (careful)
+    document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+      if (!confirm('Delete ALL categories and expenses from this device? This cannot be undone.')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      ensureDefault();
+      refreshUI();
+    });
+
+    // helpers for external calls
+    window.CategoriesAPI = {
+      addCategory, addExpenseToCategory, removeCategory, removeExpense, loadData, saveData
+    };
+
+    // init
+    ensureDefault();
+    // If no categories exist, create a few smart defaults (non-destructive)
+    const state = loadData();
+    if (!state.categories.length){
+      addCategory('Food', '#61a2e8');
+      addCategory('Transport', '#28a745');
+      addCategory('Groceries', '#f472b6');
+    }
+
+    // On load, call APP functions (theme, nav) if available
+    document.addEventListener('DOMContentLoaded', ()=>{
+      if (window.APP && typeof APP.initThemeToggle === 'function') {
+        try { APP.initThemeToggle('themeToggle'); APP.setActive('categories'); } catch(e){ /* ignore */ }
+      }
+      refreshUI();
+    });
+
+    // expose refresh for debug
+    window.refreshCategoriesUI = refreshUI;
+
+  })();
+  </script>
+
+  <!-- botpress / other scripts kept (deferred) -->
+  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+  <script src="https://files.bpcontent.cloud/2025/10/07/11/20251007115828-7Y93C0YO.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

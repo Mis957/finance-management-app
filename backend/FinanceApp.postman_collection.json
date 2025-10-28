@@ -1,0 +1,96 @@
+{
+  "info": {
+    "name": "Finance App API",
+    "_postman_id": "12345678-aaaa-bbbb-cccc-1234567890ab",
+    "description": "Postman collection for Finance Management App backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/auth/signup", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "signup"] }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/auth/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Google OAuth",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:5000/api/auth/google", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "google"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Add Transaction",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"expense\",\n  \"category\": \"Food\",\n  \"amount\": 250,\n  \"date\": \"2025-10-07\",\n  \"note\": \"Dinner with friends\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/transactions", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "transactions"] }
+          }
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:5000/api/transactions", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "transactions"] }
+          }
+        },
+        {
+          "name": "Update Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 300,\n  \"note\": \"Updated dinner cost\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/transactions/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "transactions", ":id"] }
+          }
+        },
+        {
+          "name": "Delete Transaction",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:5000/api/transactions/:id", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "transactions", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test API",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:5000/api/test", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "test"] }
+      }
+    }
+  ]
+}

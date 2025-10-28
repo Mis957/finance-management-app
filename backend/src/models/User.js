@@ -1,4 +1,6 @@
+// src/models/User.js
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,15 +9,33 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        // Password is required only if the user does NOT have googleId
+        // Password required only if googleId is not present
         return !this.googleId;
       },
     },
     googleId: { type: String, default: null },
-    profilePic: { type: String },
+    profilePic: { type: String, default: "https://cdn-icons-png.flaticon.com/512/847/847969.png" },
   },
   { timestamps: true }
 );
+
+// Hash password before save
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// add convenience method to compare password
+userSchema.methods.comparePassword = async function (candidate) {
+  if (!this.password) return false;
+  return bcrypt.compare(candidate, this.password);
+};
 
 const User = mongoose.model("User", userSchema);
 export default User;

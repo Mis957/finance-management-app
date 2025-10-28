@@ -1,0 +1,338 @@
+/* -------------------------
+   🌈 Global Theme Variables
+-------------------------- */
+h1{
+  font-family:fantasy;
+}
+
+:root {
+  --primary: #08b592;
+  --primary-600: #918deb;
+  --accent: #066e4b;
+  --danger: #ef4444;
+  --muted: #6b7280;
+
+  --bg: #d5fbfd;
+  --card: linear-gradient(90deg, #d4fdf3, #bdf9e2);
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0, 0, 0, 0.08);
+  --text: #033437;
+
+   /* 🌞 Light gradient navbar */
+   --nav-bg: linear-gradient(90deg, #77c8de, #e1d2b8);
+   --nav-text: #04493b;
+   .nav-link:hover {
+  opacity: 1;
+  text-shadow: 0 0 6px rgba(2, 111, 9, 0.929);
+}
+}
+
+/* 🌙 Dark Theme */
+body.dark {
+  --primary: #04aa68;
+  --primary-600: #00b3ff;
+  --bg: #07172d;
+  --card: linear-gradient(90deg, #041943, #56038e);
+  --border: rgba(255, 255, 255, 0.203);
+  --shadow: rgba(255, 255, 255, 0.1);
+  --text: #e9d2ff;
+  --muted: #bbc1cb;
+
+  /* 🌌 Dark gradient navbar */
+  --nav-bg: linear-gradient(90deg, #0f1f46, #0939ab);
+  --nav-text: #c9d1ff;
+  .nav-link:hover {
+  opacity: 1;
+  text-shadow: 0 0 6px rgba(221, 208, 255, 0.929);
+}
+}
+
+/* -------------------------
+   ✨ Base Styles
+-------------------------- */
+body {
+  margin: 0;
+  font-family:Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: 80px;
+  transition: background 0.2s, color 0.2s;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, div, small, label, a, li, button {
+  color: var(--text);
+  transition: color 0.2s;
+}
+
+a { text-decoration: none; }
+
+/* -------------------------
+   🌐 Navbar
+-------------------------- */
+#navbar {
+  background: var(--nav-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: background 0.4s, color 0.4s;
+  backdrop-filter: blur(12px);
+ 
+}
+
+#navbar-brand {
+  font-weight: 700;
+  color: var(--nav-text) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  backdrop-filter: blur(2px);
+  opacity: 0.75;
+  transition: 0.3s;
+}
+
+.nav-link {
+  color: var(--nav-text) !important;
+  opacity: 0.85;
+  margin: 0 6px;
+  transition: 0.3s;
+}
+
+.nav-link.active {
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 2px;
+}
+
+/* -------------------------
+   🧭 Bottom Navigation
+-------------------------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 68px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px var(--shadow);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+  opacity: 0.75;
+  transition: background 0.4s, color 0.4s;
+}
+.bottom-nav a {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: 0.3s;
+}
+.bottom-nav a.active {
+  color: var(--primary);
+  transform: translateY(-3px);
+  font-weight: 600;
+}
+body.dark .bottom-nav {
+  background: rgba(17, 24, 39, 0.85);
+}
+
+/* -------------------------
+   🧩 Cards
+-------------------------- */
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 30px var(--shadow);
+  transition: all 0.4s;
+  color: var(--text);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgb(0, 0, 0);
+  border-color: var(--primary);
+}
+.card-header {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* -------------------------
+   🎨 Buttons
+-------------------------- */
+.btn-primary {
+  background: linear-gradient(90deg, var(--primary), var(--primary-600));
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.18);
+  transition: 0.25s;
+  color: #fff !important;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(68, 63, 164, 0.918);
+}
+.btn-light {
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+.btn-light:hover {
+  background: #e5e7eb;
+}
+
+/* -------------------------
+   💬 Forms and Inputs
+-------------------------- */
+input, select, textarea {
+  border-radius: 8px !important;
+  border: 1px solid var(--border);
+  background: rgb(126, 92, 246);
+  color: var(--text) !important;
+  transition: 0.3s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgb(196, 100, 244);
+  box-shadow: 0 0 10px rgba(132, 134, 245, 0.934);
+  outline: none;
+}
+
+/* -------------------------
+   💫 Animations
+-------------------------- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-anim { animation: fadeInUp 0.6s ease-out both; }
+
+@keyframes floatIn {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.card, form, .navbar, .bottom-nav {
+  animation: floatIn 0.8s ease forwards;
+}
+
+/* -------------------------
+   🏅 Badges
+-------------------------- */
+.badge-card {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.badge-card:hover { transform: scale(1.05);
+ animation: floatIn 0.8s ease forwards; }
+.badge-card.active {
+  background: linear-gradient(45deg, #fff, #d4edda);
+  box-shadow: 0 0 10px rgba(0, 255, 100, 0.6);
+  transform: scale(1.05);
+  transition: all 0.3s ease;
+}
+
+/* -------------------------
+   📱 Responsive
+-------------------------- */
+@media (max-width: 768px) {
+  .bottom-nav { height: 76px; }
+  .navbar-brand { font-size: 1.1rem; }
+  .card { border-radius: 12px; }
+}
+
+/* 🌗 Theme Lever Button */
+#themeToggle {
+  position: relative;
+  width: 50px;
+  height: 20px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(90deg, #d18989, #ffffff);
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 6px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+}
+#themeToggle::before {
+  content: '☀️';
+  position: absolute;
+  left: 2px;
+  font-size: 14px;
+  transition: all 0.4s ease;
+}
+#themeToggle::after {
+  content: '🌙';
+  position: absolute;
+  right: 5px;
+  font-size: 14px;
+  transition: all 0.4s ease;
+}
+#themeToggle .lever-circle {
+  width: 15px;
+  height: 15px;
+  background: var(--primary);
+  border-radius: 50%;
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  transition: all 0.3s ease;
+}
+
+/* When in dark mode */
+body.dark #themeToggle {
+  background: linear-gradient(90deg, #1e0e35, #070328);
+  justify-content: flex-end;
+}
+body.dark #themeToggle .lever-circle {
+  left: 30px;
+  background: #f6dd81f0;
+}
+
+
+
+/* === Animated Background === */
+#galaxy-bg, #light-icons-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#galaxy-bg { background: rgb(9, 1, 52); opacity: 0; visibility: hidden; }
+#light-icons-bg { opacity: 0; visibility: hidden; }
+
+body.dark #galaxy-bg { opacity: 1; visibility: visible; }
+body.dark #light-icons-bg { opacity: 0; visibility: hidden; }
+
+body:not(.dark) #galaxy-bg { opacity: 0; visibility: hidden; }
+body:not(.dark) #light-icons-bg { opacity: 1; visibility: visible; }
+
+/* floating icon style */
+#light-icons-bg img {
+  position: absolute;
+  width: 30px;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px rgba(28, 158, 140, 0.89));
+  animation: floatUp 10s linear infinite;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+
+
