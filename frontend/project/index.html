@@ -3,13 +3,15 @@
   <head>
     <meta charset="utf-8">
     <title>Finance App</title>
-    <meta http-equiv="refresh" content="0;url=login.html">
+
+    <!-- Use an absolute path so it works no matter the URL -->
+    <meta http-equiv="refresh" content="0;url=/login/login.html">
     <script>
       // fallback if meta refresh blocked
-      window.location.href = 'login.html';
+      window.location.href = '/login/login.html';
     </script>
   </head>
   <body>
-    Redirecting to <a href="login/login.html">login</a>…
+    Redirecting to <a href="/login/login.html">login</a>…
   </body>
 </html>
