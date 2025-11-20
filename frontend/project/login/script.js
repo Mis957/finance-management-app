@@ -1,5 +1,5 @@
 /* ------------------------- 🌍 CONFIG ------------------------- */
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://finance-backend-d7ch.onrender.com/api";
 
 /* ------------------------- 🔐 LOGIN FORM ------------------------- */
 const loginForm = document.getElementById("loginForm");

@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "https://finance-backend-d7ch.onrender.com";
 
 export async function apiFetch(path, method = "GET", body = null) {
   const token = localStorage.getItem("token");  // ✅ get token saved after login
