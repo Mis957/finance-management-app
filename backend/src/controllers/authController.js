@@ -42,7 +42,20 @@ export const loginUser = async (req, res) => {
 };
 
 // Google callback
+// Google callback
 export const googleCallback = (req, res) => {
-  const token = generateToken(req.user);
-  res.redirect(`http://localhost:3000/project/dashboard.html?token=${token}`);
+  try {
+    // create a JWT for the user (req.user should be the user object from passport)
+    const token = generateToken(req.user);
+
+    // Use FRONTEND_URL env var in production; fallback to localhost for local dev
+    const frontend = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    // Redirect to the deployed dashboard (no /project prefix — the published root is frontend/project)
+    return res.redirect(`${frontend}/dashboard.html?token=${encodeURIComponent(token)}`);
+  } catch (err) {
+    console.error('Google callback error:', err);
+    return res.status(500).send('Authentication error');
+  }
 };
+
