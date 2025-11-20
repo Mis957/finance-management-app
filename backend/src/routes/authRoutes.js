@@ -1,40 +1,26 @@
 import express from "express";
 import passport from "passport";
-import bcrypt from "bcryptjs"; // ✅ Added this import
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { registerUser, loginUser, googleCallback } from "../controllers/authController.js";
+import { registerUser, loginUser, googleCallback } from "../controllers/authController.js"; // if you still use googleCallback, otherwise inline
 import { protect } from "../middlewares/authMiddleware.js";
 import User from "../models/User.js";
 
 const router = express.Router();
 
-// =====================
-// 🔹 Google Login Flow
-// =====================
+// Start Google auth (strategy callbackURL is read from passport config)
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-// =====================
-// 🔹 Email/Password Login
-// =====================
+// Email/password login (unchanged)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.status(200).json({ token, user });
   } catch (err) {
     console.error("❌ Login error:", err.message);
@@ -42,31 +28,32 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// =====================
-// 🔹 Google Callback
-// =====================
+// Google callback — uses FRONTEND_URL env var and does NOT hardcode localhost
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-     scope: ["profile", "email"],
-    prompt: "select_account",
-    failureRedirect: "http://localhost:3000/project/login/login.html",
+    failureRedirect: (process.env.FRONTEND_URL || "http://localhost:3000") + "/login/login.html",
     session: false,
   }),
   (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    try {
+      const token = jwt.sign(
+        { id: req.user._id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+      );
 
-    res.redirect(`http://localhost:3000/project/dashboard.html?token=${token}`);
+      const frontend = process.env.FRONTEND_URL || "http://localhost:3000";
+      // Redirect to the deployed dashboard (no /project prefix)
+      return res.redirect(`${frontend}/dashboard.html?token=${encodeURIComponent(token)}`);
+    } catch (err) {
+      console.error("Google callback handler error:", err);
+      return res.status(500).send("Authentication error");
+    }
   }
 );
 
-// =====================
-// 🔹 Logout Route
-// =====================
+// Logout (unchanged)
 router.get("/logout", (req, res) => {
   req.logout?.(() => {
     req.session?.destroy(() => {
