@@ -30,7 +30,7 @@ app.use(express.json());
 // ✅ CORS — allow your frontend URLs
 app.use(
   cors({
-    origin: ["http://127.0.0.1:3000", "http://localhost:3000"],
+    origin: ["http://127.0.0.1:3000", "https://finance-frontend-o0oo.onrender.com"],
     credentials: true,
   })
 );
